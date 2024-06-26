@@ -5,9 +5,12 @@ class ProductController {
 
     async addProduct(req, res) {
         const nuevoProducto = req.body;
+        console.log(req.body)
+        console.log(nuevoProducto)
         try {
             await productRepository.agregarProducto(nuevoProducto);
         } catch (error) {
+            console.log(error)
             res.status(500).send("Error");
         }
     }
@@ -17,9 +20,10 @@ class ProductController {
             let { limit = 10, page = 1, sort, query } = req.query;
 
             const productos = await productRepository.obtenerProductos(limit, page, sort, query);
-           
+           console.log(productos)
             res.json(productos);
         } catch (error) { 
+            console.log(error)
             res.status(500).send("Error");
         }
     }

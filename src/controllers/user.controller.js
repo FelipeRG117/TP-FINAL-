@@ -32,18 +32,20 @@ class UserController {
                 email,
                 cart: nuevoCarrito._id,
                 password: createHash(password),
-                age
+                age,
+                role
             });
-
+            console.log(nuevoUsuario)
             await userRepository.create(nuevoUsuario);
 
             const token = jwt.sign({ user: nuevoUsuario }, "coderhouse", {
                 expiresIn: "1h"
             });
-
+            console.log("el token de register", token)
             res.cookie("coderCookieToken", token, {
                 maxAge: 3600000,
-                httpOnly: true
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production" // Asegúrate de que la cookie sea segura solo en producción
             });
 
             res.redirect("/api/users/profile");
@@ -55,6 +57,8 @@ class UserController {
 
     async login(req, res) {
         const { email, password } = req.body;
+        console.log("soy login", req.body)
+        console.log(email, password)
         try {
             const usuarioEncontrado = await userRepository.findByEmail(email);
 
@@ -70,16 +74,18 @@ class UserController {
             const token = jwt.sign({ user: usuarioEncontrado }, "coderhouse", {
                 expiresIn: "1h"
             });
+            console.log("SOy un TOKEEEEEN", token)
             //CUARTA INTEGRADORA.
             // Actualizar la propiedad last_connection
             usuarioEncontrado.last_connection = new Date();
             await usuarioEncontrado.save();
 
-            res.cookie("coderCookieToken", token, {
+            const respuesta= res.cookie("coderCookieToken", token, {
                 maxAge: 3600000,
-                httpOnly: true
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production" // Asegúrate de que la cookie sea segura solo en producción inclui el comnetario de chatGPT para que el que mire el codigo lo tenga en cuenta
             });
-
+            console.log("soy la cookie que esta siendo enviada o la respuesta", respuesta)
             res.redirect("/api/users/profile");
         } catch (error) {
             console.error(error);

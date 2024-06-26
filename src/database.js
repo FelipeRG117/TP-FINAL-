@@ -5,7 +5,7 @@ const {mongo_url} = configObject;
 class BaseDatos {
     static #instancia; 
     constructor(){
-        mongoose.connect(mongo_url);
+        mongoose.connect("mongodb+srv://FelipeReyes50045:coderhouse@vidar771.pck1zis.mongodb.net/tienda?retryWrites=true&w=majority&appName=vidar771");
     }
 
     static getInstancia() {

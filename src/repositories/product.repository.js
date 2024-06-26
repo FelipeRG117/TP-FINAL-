@@ -32,9 +32,10 @@ class ProductRepository {
 
 
             await newProduct.save();
-
+            console.log(newProduct)
+            
             return newProduct;
-
+            
         } catch (error) {
             throw new Error("Error");
         }
