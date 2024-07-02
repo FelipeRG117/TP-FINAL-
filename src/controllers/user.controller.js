@@ -4,6 +4,10 @@ const jwt = require("jsonwebtoken");
 const { createHash, isValidPassword } = require("../utils/hashbcryp.js");
 const UserDTO = require("../dto/user.dto.js");
 const { generateResetToken } = require("../utils/tokenreset.js");
+//traemos el dotenv para poder utilizar variables de entorno
+require("dotenv").config()
+//traemos nodemailer
+const nodemailer = require("nodemailer")
 
 // Repositorio de usuarios
 const UserRepository = require("../repositories/user.repository.js");
@@ -80,7 +84,7 @@ class UserController {
             usuarioEncontrado.last_connection = new Date();
             await usuarioEncontrado.save();
 
-            const respuesta= res.cookie("coderCookieToken", token, {
+            const respuesta = res.cookie("coderCookieToken", token, {
                 maxAge: 3600000,
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production" // Asegúrate de que la cookie sea segura solo en producción inclui el comnetario de chatGPT para que el que mire el codigo lo tenga en cuenta
@@ -122,14 +126,77 @@ class UserController {
         res.clearCookie("coderCookieToken");
         res.redirect("/login");
     }
+    //---------------------
+    //Cambiarlo a premium 
+    async requestAdmin(req, res) {
+        const { email, password, message } = req.body;
+        try {
+            console.log(email, message)
+            const user = await userRepository.findByEmail(email)
+            console.log(user)
+            if (!user) {
+                console.log("No se encontro el email del usuario")
+            }
+            console.log("esta es la contraseña del usuario", user.password)
+            //Ahora generamos la comparacion decontraseñas de usuario y el que se recibe 
+            console.log(password)
+            const esValido = await isValidPassword(password, user)
+            console.log("la contraseña es valida?", esValido)
+            if (!esValido) {
+                return res.status(401).send("no coinciden las contraseñas vuelva mas tarde !!!!")
+            }
+            // Crear el token
+            const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+                expiresIn: '1h'
+            });
 
+            // Configurar Nodemailer
+            const transporter = nodemailer.createTransport({
+                service: "Gmail",
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            // Definir opciones del correo
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: "Confirmación de Solicitud de Admin",
+                html: `<p>Hola ${user.first_name},</p>
+                   <p>Has solicitado ser administrador. Por favor, haz clic en el siguiente enlace para confirmar tu solicitud:</p>
+                   <a href="http://localhost:3000/confirmAdmin/${token}">Confirmar Solicitud</a>
+                   <p>Este enlace expirará en 1 hora.</p>`
+            };
+
+            // Enviar el correo electrónico
+            await transporter.sendMail(mailOptions);
+            user.role = `admin`
+            await user.save()
+            res.redirect("profile")
+        } catch (err) {
+            console.log(err)
+            res.status(500).send("Error epara registrar admin")
+        }
+    }
+
+    //renderizador de formularioadmin
+    async renderFormAdmin(req, res) {
+        try {
+            res.render("requestadmin")
+        } catch (err) {
+            res.status(500).send("werror en render form", err)
+        }
+    }
+    //cehequeo de si es amdin 
     async admin(req, res) {
         if (req.user.user.role !== "admin") {
             return res.status(403).send("Acceso denegado");
         }
         res.render("admin");
     }
-
+    //--------------------------
     // Tercer integradora: 
     async requestPasswordReset(req, res) {
         const { email } = req.body;
@@ -224,7 +291,7 @@ class UserController {
 
             const nuevoRol = user.role === "usuario" ? "premium" : "usuario";
 
-            res.send(nuevoRol); 
+            res.send(nuevoRol);
 
         } catch (error) {
             res.status(500).send("Error del servidor, Hector tendra gripe dos semanas mas");

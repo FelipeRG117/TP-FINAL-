@@ -32,6 +32,8 @@ class UserRepository {
             throw error;
         }
     }
+    //metodo de validacion de email y password 
+    async 
 }
 
 module.exports = UserRepository;

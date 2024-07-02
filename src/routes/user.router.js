@@ -12,6 +12,10 @@ router.post("/logout", userController.logout.bind(userController));
 router.get("/admin", passport.authenticate("jwt", { session: false }), userController.admin);
 router.post("/requestPasswordReset", userController.requestPasswordReset); // Nueva ruta
 router.post('/reset-password', userController.resetPassword);
+// Rutas Admin
+router.get("/requestAdmin", userController.renderFormAdmin)
+router.post("/requestAdmin", userController.requestAdmin)
+
 
 //Cuarta integradora: 
 
